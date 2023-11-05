@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/api/dialog';
-import { readBinaryFile } from '@tauri-apps/api/fs';
 
 import './App.css';
 
@@ -13,15 +12,12 @@ function App() {
 		const unlistenFileDrop = listen(
 			'tauri://file-drop',
 			async ({ payload }: { payload: string[] }) => {
-				console.log(payload);
 				payload.forEach((file) => {
 					setFiles((prev: string[]) => [...prev, file]);
 					setFiles((prev: string[]) => {
-						console.log(new Set(prev));
 						return [...new Set(prev)];
 					});
 				});
-				console.log(files);
 				setChangeStyle(false);
 			}
 		);
@@ -45,10 +41,7 @@ function App() {
 	}, []);
 
 	const removeFile = async (index: number) => {
-		const binary = await readBinaryFile(files[index]);
-
-		console.log();
-		// setFiles((prev) => prev.filter((_, i) => i !== index));
+		setFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
 	const selectFile = async () => {
@@ -59,7 +52,6 @@ function App() {
 		if (Array.isArray(selected)) {
 			// user selected multiple files
 			selected.forEach((file) => {
-				console.log(files, file);
 				if (!files.includes(file)) {
 					setFiles((prev: string[]) => [...prev, file]);
 				}
@@ -69,7 +61,6 @@ function App() {
 			return;
 		} else {
 			// user selected a single file
-			console.log(selected);
 			if (!files.includes(selected)) {
 				setFiles((prev: string[]) => [...prev, selected]);
 			}
@@ -92,33 +83,37 @@ function App() {
 					</>
 				) : (
 					<>
-						{' '}
 						<ul>
-							{files.map((file, index) => (
-								<li key={index} value={file}>
-									{file}
-									<button
-										onClick={() => removeFile(index)}
-										style={{
-											display: 'flex',
-											justifyContent: 'center',
-											alignItems: 'center',
-											maxWidth: '30px',
-											maxHeight: '30px',
-											padding: '5px',
-											marginLeft: '10px',
-											background: '#FF4029',
-											boxShadow: 'none',
-										}}>
-										<img
-											width={'20px'}
-											height={'20px'}
-											src='/trash.svg'
-											alt='trash icon'
-										/>
-									</button>
-								</li>
-							))}
+							{files.map((file, index) => {
+								return (
+									<li key={index} value={file}>
+										<div style={{ wordBreak: 'break-all' }}>
+											{file}
+										</div>
+
+										<button
+											onClick={() => removeFile(index)}
+											style={{
+												display: 'flex',
+												justifyContent: 'center',
+												alignItems: 'center',
+												maxWidth: '30px',
+												maxHeight: '30px',
+												padding: '5px',
+												marginLeft: '10px',
+												background: '#FF4029',
+												boxShadow: 'none',
+											}}>
+											<img
+												width={'20px'}
+												height={'20px'}
+												src='/trash.svg'
+												alt='trash icon'
+											/>
+										</button>
+									</li>
+								);
+							})}
 						</ul>
 						<div style={{ display: 'flex', margin: '1rem 0' }}>
 							<button
