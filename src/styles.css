@@ -37,11 +37,6 @@ html {
 	align-items: center;
 }
 
-.row {
-	display: flex;
-	justify-content: center;
-}
-
 a {
 	font-weight: 500;
 	color: #646cff;
@@ -74,12 +69,25 @@ button {
 	cursor: pointer;
 }
 
-button:hover {
-	border-color: #396cd8;
-}
 button:active {
 	border-color: #396cd8;
 	background-color: #e8e8e8;
+}
+button:active:hover {
+	border-color: #396cd8;
+}
+button:disabled:hover {
+	opacity: 0.5;
+	cursor: unset;
+}
+
+button:disabled {
+	opacity: 0.5;
+	cursor: unset;
+}
+
+button:disabled button:hover {
+	border-color: none;
 }
 
 input,
