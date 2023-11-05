@@ -7,16 +7,27 @@ import './App.css';
 function App() {
 	const [files, setFiles] = useState<string[]>([]);
 	const [changeStyle, setChangeStyle] = useState(false);
+	const [error, setError] = useState('');
 
 	useEffect(() => {
 		const unlistenFileDrop = listen(
 			'tauri://file-drop',
 			async ({ payload }: { payload: string[] }) => {
+				setError('');
 				payload.forEach((file) => {
-					setFiles((prev: string[]) => [...prev, file]);
-					setFiles((prev: string[]) => {
-						return [...new Set(prev)];
-					});
+					console.log(file.split('.')[file.split('.').length - 1]);
+					if (
+						file.split('.')[file.split('.').length - 1] === 'pcap'
+					) {
+						setFiles((prev: string[]) => [...prev, file]);
+						setFiles((prev: string[]) => {
+							return [...new Set(prev)];
+						});
+					} else {
+						setError(
+							'Sorry not all selected files are .pcap files'
+						);
+					}
 				});
 				setChangeStyle(false);
 			}
@@ -146,6 +157,19 @@ function App() {
 				/>
 				<button type='submit'>Greet</button>
 			</form> */}
+			<div
+				style={{
+					minHeight: '20px',
+					display: 'flex',
+					justifyContent: 'center',
+					alignItems: 'center',
+					marginBottom: '1rem',
+					marginTop: '1rem',
+					color: '#FF4029',
+					fontWeight: 'bold',
+				}}>
+				{error}
+			</div>
 		</div>
 	);
 }

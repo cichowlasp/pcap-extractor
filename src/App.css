@@ -12,6 +12,7 @@
 	margin: 2rem 1rem;
 	overflow: auto;
 	margin-top: 0;
+	margin-bottom: 0;
 }
 
 .file-drop .text {
