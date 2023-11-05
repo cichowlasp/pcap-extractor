@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/api/dialog';
+import { readBinaryFile } from '@tauri-apps/api/fs';
 
 import './App.css';
 
@@ -43,8 +44,11 @@ function App() {
 		};
 	}, []);
 
-	const removeFile = (index: number) => {
-		setFiles((prev) => prev.filter((_, i) => i !== index));
+	const removeFile = async (index: number) => {
+		const binary = await readBinaryFile(files[index]);
+
+		console.log();
+		// setFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
 	const selectFile = async () => {
