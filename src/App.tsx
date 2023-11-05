@@ -43,6 +43,10 @@ function App() {
 		};
 	}, []);
 
+	const removeFile = (index: number) => {
+		setFiles((prev) => prev.filter((_, i) => i !== index));
+	};
+
 	const selectFile = async () => {
 		const selected = await open({
 			directory: false,
@@ -83,19 +87,51 @@ function App() {
 						</button>
 					</>
 				) : (
-					<ul>
-						{files.map((file, index) => (
-							<li key={index} value={file}>
-								{file}
-							</li>
-						))}
-						<button onClick={() => setFiles([])}>
-							Clear all files
-						</button>
-						<button onClick={() => selectFile()}>
-							Add more files
-						</button>
-					</ul>
+					<>
+						{' '}
+						<ul>
+							{files.map((file, index) => (
+								<li key={index} value={file}>
+									{file}
+									<button
+										onClick={() => removeFile(index)}
+										style={{
+											display: 'flex',
+											justifyContent: 'center',
+											alignItems: 'center',
+											maxWidth: '30px',
+											maxHeight: '30px',
+											padding: '5px',
+											marginLeft: '10px',
+											background: '#FF4029',
+											boxShadow: 'none',
+										}}>
+										<img
+											width={'20px'}
+											height={'20px'}
+											src='/trash.svg'
+											alt='trash icon'
+										/>
+									</button>
+								</li>
+							))}
+						</ul>
+						<div style={{ display: 'flex', margin: '1rem 0' }}>
+							<button
+								style={{ marginRight: '0.5rem' }}
+								onClick={() => selectFile()}>
+								Add more files
+							</button>
+							<button
+								style={{
+									marginLeft: '0.5rem',
+									background: '#FF4029',
+								}}
+								onClick={() => setFiles([])}>
+								Clear all files
+							</button>
+						</div>
+					</>
 				)}
 			</div>
 			{/* <form
