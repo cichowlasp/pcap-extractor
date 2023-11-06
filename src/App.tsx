@@ -93,109 +93,105 @@ function App() {
 	return (
 		<div className='container'>
 			<h1>PCAP Extractor</h1>
-			{form ? (
-				<Form files={files} setFormView={setFormView} />
-			) : (
-				<>
-					<div className={`file-drop ${changeStyle ? 'hover' : ''}`}>
-						{files.length === 0 ? (
-							<>
-								<div className='text'>
-									<div>Drag files here </div>
-									<div>or</div>
-								</div>
-								<button onClick={() => selectFile()}>
-									Select files
+
+			<>
+				<div className={`file-drop ${changeStyle ? 'hover' : ''}`}>
+					{files.length === 0 ? (
+						<>
+							<div className='text'>
+								<div>Drag files here </div>
+								<div>or</div>
+							</div>
+							<button onClick={() => selectFile()}>
+								Select files
+							</button>
+						</>
+					) : (
+						<>
+							<ul>
+								{files.map((file, index) => {
+									return (
+										<li key={index} value={file}>
+											<div
+												style={{
+													wordBreak: 'break-all',
+												}}>
+												{file}
+											</div>
+
+											<button
+												onClick={() =>
+													removeFile(index)
+												}
+												style={{
+													display: 'flex',
+													justifyContent: 'center',
+													alignItems: 'center',
+													maxWidth: '30px',
+													maxHeight: '30px',
+													padding: '5px',
+													marginLeft: '10px',
+													background: '#FF4029',
+													boxShadow: 'none',
+												}}>
+												<img
+													width={'20px'}
+													height={'20px'}
+													src='/trash.svg'
+													alt='trash icon'
+												/>
+											</button>
+										</li>
+									);
+								})}
+							</ul>
+							<div
+								style={{
+									display: 'flex',
+									margin: '1rem 0',
+								}}>
+								<button
+									style={{ marginRight: '0.5rem' }}
+									onClick={() => selectFile()}>
+									Add more files
 								</button>
-							</>
-						) : (
-							<>
-								<ul>
-									{files.map((file, index) => {
-										return (
-											<li key={index} value={file}>
-												<div
-													style={{
-														wordBreak: 'break-all',
-													}}>
-													{file}
-												</div>
-
-												<button
-													onClick={() =>
-														removeFile(index)
-													}
-													style={{
-														display: 'flex',
-														justifyContent:
-															'center',
-														alignItems: 'center',
-														maxWidth: '30px',
-														maxHeight: '30px',
-														padding: '5px',
-														marginLeft: '10px',
-														background: '#FF4029',
-														boxShadow: 'none',
-													}}>
-													<img
-														width={'20px'}
-														height={'20px'}
-														src='/trash.svg'
-														alt='trash icon'
-													/>
-												</button>
-											</li>
-										);
-									})}
-								</ul>
-								<div
+								<button
 									style={{
-										display: 'flex',
-										margin: '1rem 0',
-									}}>
-									<button
-										style={{ marginRight: '0.5rem' }}
-										onClick={() => selectFile()}>
-										Add more files
-									</button>
-									<button
-										style={{
-											marginLeft: '0.5rem',
-											background: '#FF4029',
-										}}
-										onClick={() => setFiles([])}>
-										Clear all files
-									</button>
-								</div>
-							</>
-						)}
-					</div>
+										marginLeft: '0.5rem',
+										background: '#FF4029',
+									}}
+									onClick={() => setFiles([])}>
+									Clear all files
+								</button>
+							</div>
+						</>
+					)}
+				</div>
 
-					<button
-						onClick={() => setFormView(true)}
-						disabled={files.length === 0}
-						style={{
-							marginTop: '1rem',
-							backgroundColor:
-								files.length === 0 ? '' : '#08A045',
-						}}>
-						Proceed with analysis
-					</button>
-					<div
-						style={{
-							minHeight: '20px',
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							marginBottom: '10px',
-							marginTop: '10px',
-							color: '#FF4029',
-							fontWeight: 'bold',
-						}}>
-						{error}
-					</div>
-				</>
-			)}
+				<button
+					onClick={() => setFormView(true)}
+					disabled={files.length === 0}
+					style={{
+						marginTop: '1rem',
+						backgroundColor: files.length === 0 ? '' : '#08A045',
+					}}>
+					Proceed with analysis
+				</button>
+				<div
+					style={{
+						minHeight: '20px',
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						marginBottom: '10px',
+						marginTop: '10px',
+						color: '#FF4029',
+						fontWeight: 'bold',
+					}}>
+					{error}
+				</div>
+			</>
+			{form && <Form files={files} setFormView={setFormView} />}
 		</div>
 	);
 }
