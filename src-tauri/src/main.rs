@@ -8,6 +8,10 @@ use pnet::packet::ip::IpNextHeaderProtocols;
 use std::collections::HashMap;
 use pnet::packet::ipv4::Ipv4Packet;
 use pnet::packet::tcp::TcpPacket;
+use zip::write::FileOptions;
+use zip::ZipWriter;
+use std::fs;
+
 
 const JPEG_MAGIC_NUMBER: [u8; 4] = [0xFF, 0xD8, 0xFF, 0xE0]; // JPEG magic number
 const PNG_MAGIC_NUMBER: [u8; 8] = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]; // PNG magic number
@@ -136,9 +140,49 @@ fn save_file(data: &[u8],file_extension: &str, temp_dir: &Path) -> Option<String
     }
 }
 
+// Function to zip files from an array of paths and save the resulting zip file to a directory
+#[tauri::command]
+fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, zip_file_name: String) -> Result<String, String> {
+    let output_zip_path = std::path::Path::new(&output_directory).join(&zip_file_name);
+    let output_file = match File::create(&output_zip_path) {
+        Ok(file) => file,
+        Err(_) => return Err("Failed to create output zip file".to_string()),
+    };
+    let mut zip = ZipWriter::new(output_file);
+
+    for file_path in file_paths {
+        let metadata = match fs::metadata(&file_path) {
+            Ok(metadata) => metadata,
+            Err(_) => return Err(format!("Failed to get metadata for: {}", &file_path)),
+        };
+
+        if metadata.is_file() {
+            let file_contents = match std::fs::read(&file_path) {
+                Ok(contents) => contents,
+                Err(_) => return Err(format!("Failed to read file: {}", &file_path)),
+            };
+
+            let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+            if let Err(_) = zip.start_file(&file_path, options) {
+                return Err(format!("Failed to add file: {}", &file_path));
+            }
+
+            if let Err(_) = zip.write_all(&file_contents) {
+                return Err(format!("Failed to write file content: {}", &file_path));
+            }
+        }
+    }
+
+    if let Err(_) = zip.finish() {
+        return Err("Failed to finalize the zip file".to_string());
+    }
+
+    Ok(format!("Zip file created at: {:?}", &output_zip_path))
+}
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![read_pcap_file])
+        .invoke_handler(tauri::generate_handler![read_pcap_file, zip_and_save_to_directory])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

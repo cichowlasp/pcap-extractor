@@ -22,6 +22,8 @@ image = "0.24.7"
 chrono = "0.4.31"
 pnet = "0.34.0"
 tempfile = "3.8.1"
+zip = "0.6.6"
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
