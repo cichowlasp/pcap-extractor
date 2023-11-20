@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 use pcap::Capture;
 use pnet::packet::Packet;
 use pnet::packet::ethernet::{EthernetPacket, EtherTypes};
@@ -16,9 +17,11 @@ const PDF_MAGIC_NUMBER: [u8; 4] = [0x25, 0x50, 0x44, 0x46]; // PDF magic number
 const ZIP_MAGIC_NUMBER: [u8; 4] = [0x50, 0x4B, 0x03, 0x04]; // ZIP magic number
 
 #[tauri::command]
-fn read_pcap_file(file_path: &str) -> Result<(), String> {
+fn read_pcap_file(file_path: &str) ->  Vec<String> {
+    let mut file_paths: Vec<String> = Vec::new();
     if let Ok(mut cap) = Capture::from_file(file_path) {
         let mut tcp_streams: HashMap<String, Vec<u8>> = HashMap::new();
+        let temp_dir = std::env::temp_dir();
         while let Ok(packet) = cap.next_packet() {
             // Process each captured packet
             let data= packet.data;
@@ -44,22 +47,34 @@ fn read_pcap_file(file_path: &str) -> Result<(), String> {
                                         data.extend_from_slice(payload);
     
                                         if is_jpeg(data) {
-                                            save_file(&data, "jpg");
+                                            if let Some(file_path) = save_file(&data, "jpg", &temp_dir) {
+                                                file_paths.push(file_path); // Add the file path to the vector
+                                            }
                                             *data = Vec::new(); // Clear data after saving JPEG
                                         } else if is_png(data) {
-                                            save_file(&data, "png");
+                                            if let Some(file_path) = save_file(&data, "jpg", &temp_dir) {
+                                                file_paths.push(file_path); // Add the file path to the vector
+                                            }
                                             *data = Vec::new(); // Clear data after saving PNG
                                         } else if is_gif(data) {
-                                            save_file(&data, "gif");
+                                            if let Some(file_path) = save_file(&data, "jpg", &temp_dir) {
+                                                file_paths.push(file_path); // Add the file path to the vector
+                                            }
                                             *data = Vec::new(); // Clear data after saving GIF
                                         } else if is_txt(data) {
-                                            save_file(&data, "txt");
+                                            if let Some(file_path) = save_file(&data, "jpg", &temp_dir) {
+                                                file_paths.push(file_path); // Add the file path to the vector
+                                            }
                                             *data = Vec::new(); // Clear data after saving TXT
                                         } else if is_pdf(data) {
-                                            save_file(&data, "pdf");
+                                            if let Some(file_path) = save_file(&data, "jpg", &temp_dir) {
+                                                file_paths.push(file_path); // Add the file path to the vector
+                                            }
                                             *data = Vec::new(); // Clear data after saving PDF
                                         } else if is_zip(data) {
-                                            save_file(&data, "zip");
+                                            if let Some(file_path) = save_file(&data, "jpg", &temp_dir) {
+                                                file_paths.push(file_path); // Add the file path to the vector
+                                            }
                                             *data = Vec::new(); // Clear data after saving ZIP
                                         }
                                     } else {
@@ -75,8 +90,7 @@ fn read_pcap_file(file_path: &str) -> Result<(), String> {
             }
         }
     }
-
-    Ok(())
+    return file_paths;
 }
 
 fn is_jpeg(data: &[u8]) -> bool {
@@ -103,18 +117,22 @@ fn is_zip(data: &[u8]) -> bool {
     data.starts_with(&ZIP_MAGIC_NUMBER)
 }
 
-fn save_file(data: &[u8],file_extension: &str) {
+fn save_file(data: &[u8],file_extension: &str, temp_dir: &Path) -> Option<String> {
     // Save the extracted JPEG file to disk with a unique name
     let file_name = format!("extracted_image_{}.{}", chrono::Utc::now().timestamp_millis(),file_extension);
-
-    if let Ok(mut file) = File::create(format!("/Users/cichowlasp/Documents/test/{file_name}")) {
+    let path = temp_dir.join(file_name);
+    let display_path = path.clone();
+    if let Ok(mut file) = File::create(path) {
         if let Err(e) = file.write_all(data) {
             eprintln!("Error writing JPEG file: {:?}", e);
+            return None;
         } else {
-            println!("JPEG file saved as: {}", file_name);
+            println!("JPEG file saved in: {}", display_path.display());
+            return Some(format!("{}",display_path.display()));
         }
     } else {
-        eprintln!("Error creating JPEG file: {}", file_name);
+        eprintln!("Error creating JPEG files");
+        return None;
     }
 }
 
