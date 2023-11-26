@@ -1,27 +1,63 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './Form.css';
+import { invoke } from '@tauri-apps/api/tauri';
+// When using the Tauri global script (if not using the npm package)
+// Be sure to set `build.withGlobalTauri` in `tauri.conf.json` to true
+
+type iData = {
+	name: string;
+	surname: string;
+	timeStart?: Date;
+	timeEnd?: Date;
+	files?: string[];
+};
 
 const Form = ({
 	files,
 	setFormView,
+	setLoading,
+	data,
+	setData,
 }: {
 	files: string[];
 	setFormView: React.Dispatch<React.SetStateAction<boolean>>;
+	setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+	setFiles: React.Dispatch<React.SetStateAction<string[]>>;
+	data: iData;
+	setData: React.Dispatch<React.SetStateAction<iData>>;
 }) => {
-	type iData = {
-		name: string;
-		surname: string;
-	};
-	const [data, setData] = useState<iData>({
-		name: '',
-		surname: '',
-	});
-
 	return (
 		<div className='wrapper'>
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
+					setLoading(true);
+					// Invoke the command
+					files.forEach(async (file) => {
+						await invoke('read_pcap_file', {
+							filePath: file,
+							outputFolderPath: '/Users/cichowlasp/Downloads/',
+						})
+							.then((res) => res)
+							.then((res) => {
+								const paths = res as string[];
+								setData((prev) => {
+									return {
+										...prev,
+										files: [
+											...(prev?.files ? files : []),
+											...paths,
+										],
+									};
+								});
+							});
+					});
+					setData((prev) => {
+						return { ...prev, timeStart: new Date(Date.now()) };
+					});
+					setFormView(false);
+					setLoading(false);
+					console.log(data);
 				}}>
 				<h2>Fill up your data</h2>
 				<input
@@ -42,7 +78,12 @@ const Form = ({
 				/>
 				<div>
 					<span>
-						<button onClick={() => setFormView(false)} id='back'>
+						<button
+							onClick={(e) => {
+								e.preventDefault();
+								setFormView(false);
+							}}
+							id='back'>
 							Back
 						</button>
 					</span>

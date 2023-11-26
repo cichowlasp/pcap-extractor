@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/api/dialog';
 import Form from './components/Form/Form';
-
+import Loading from './components/Form/Loading';
+import Files from './components/Form/Files';
 import './App.css';
 
 function App() {
@@ -10,6 +11,18 @@ function App() {
 	const [changeStyle, setChangeStyle] = useState(false);
 	const [error, setError] = useState('');
 	const [form, setFormView] = useState(false);
+	const [loading, setLoading] = useState(false);
+	type iData = {
+		name: string;
+		surname: string;
+		timeStart?: Date;
+		timeEnd?: Date;
+		files?: string[];
+	};
+	const [data, setData] = useState<iData>({
+		name: '',
+		surname: '',
+	});
 
 	useEffect(() => {
 		const unlistenFileDrop = listen(
@@ -90,6 +103,11 @@ function App() {
 		}
 	};
 
+	if (loading) return <Loading />;
+
+	if (data?.files && data.files.length !== 0)
+		return <Files data={data} setData={setData} setFiles={setFiles} />;
+
 	return (
 		<div className='container'>
 			<h1>PCAP Extractor</h1>
@@ -139,6 +157,10 @@ function App() {
 													height={'20px'}
 													src='/trash.svg'
 													alt='trash icon'
+													style={{
+														width: '20px',
+														height: '20px',
+													}}
 												/>
 											</button>
 										</li>
@@ -191,7 +213,16 @@ function App() {
 					{error}
 				</div>
 			</>
-			{form && <Form files={files} setFormView={setFormView} />}
+			{form && (
+				<Form
+					files={files}
+					setFormView={setFormView}
+					setLoading={setLoading}
+					setFiles={setFiles}
+					data={data}
+					setData={setData}
+				/>
+			)}
 		</div>
 	);
 }

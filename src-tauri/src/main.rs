@@ -162,9 +162,14 @@ fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, 
                 Err(_) => return Err(format!("Failed to read file: {}", &file_path)),
             };
 
+            let file_name = match std::path::Path::new(&file_path).file_name() {
+                Some(name) => name.to_string_lossy().into_owned(),
+                None => return Err(format!("Failed to extract file name: {}", &file_path)),
+            };
+
             let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
-            if let Err(_) = zip.start_file(&file_path, options) {
+            if let Err(_) = zip.start_file(&file_name, options) {
                 return Err(format!("Failed to add file: {}", &file_path));
             }
 
