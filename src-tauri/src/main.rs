@@ -11,6 +11,7 @@ use pnet::packet::tcp::TcpPacket;
 use zip::write::FileOptions;
 use zip::ZipWriter;
 use std::fs;
+use sha2::{Digest, Sha256};
 
 
 const JPEG_MAGIC_NUMBER: [u8; 4] = [0xFF, 0xD8, 0xFF, 0xE0]; // JPEG magic number
@@ -140,6 +141,30 @@ fn save_file(data: &[u8],file_extension: &str, temp_dir: &Path) -> Option<String
     }
 }
 
+fn hash_files(file_paths: &[String]) -> String {
+    let mut hash_info = String::new();
+    hash_info.push_str("Extracted Files Hashes\n");
+
+    for file_path in file_paths {
+        let metadata = match fs::metadata(&file_path) {
+            Ok(metadata) => metadata,
+            Err(_) => return format!("Failed to get metadata for: {}", &file_path),
+        };
+    
+        if metadata.is_file() {
+            let file_name = match std::path::Path::new(&file_path).file_name() {
+                Some(name) => name.to_string_lossy().into_owned(),
+                None => return format!("Failed to extract file name: {}", &file_path),
+            };
+            let file_content = fs::read(&file_path).unwrap();
+            let file_hash = format!("{:x}", Sha256::digest(&file_content)); // Calculate hash using SHA-256
+            hash_info.push_str(&format!("File: {} - Hash: {}\n", file_name, file_hash));
+        }
+        
+    }
+    hash_info
+}
+
 // Function to zip files from an array of paths and save the resulting zip file to a directory
 #[tauri::command]
 fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, zip_file_name: String) -> Result<String, String> {
@@ -149,6 +174,16 @@ fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, 
         Err(_) => return Err("Failed to create output zip file".to_string()),
     };
     let mut zip = ZipWriter::new(output_file);
+    let hash_info = hash_files(&file_paths);
+
+    let mut hash_file = File::create("hash_info.txt").unwrap();
+    hash_file.write_all(hash_info.as_bytes()).unwrap();
+
+    let hash_file_content = fs::read("hash_info.txt").unwrap();
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    zip.start_file("hash_info.txt", options).unwrap();
+    zip.write_all(&hash_file_content).unwrap();
+    fs::remove_file("hash_info.txt").unwrap();
 
     for file_path in file_paths {
         let metadata = match fs::metadata(&file_path) {
