@@ -106,7 +106,14 @@ function App() {
 	if (loading) return <Loading />;
 
 	if (data?.files && data.files.length !== 0)
-		return <Files data={data} setData={setData} setFiles={setFiles} />;
+		return (
+			<Files
+				data={data}
+				setData={setData}
+				setFiles={setFiles}
+				setLoading={setLoading}
+			/>
+		);
 
 	return (
 		<div className='container'>

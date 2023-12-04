@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import './Files.css';
+import { open } from '@tauri-apps/api/dialog';
+
 type iData = {
 	name: string;
 	surname: string;
@@ -12,10 +14,12 @@ function Files({
 	data,
 	setData,
 	setFiles,
+	setLoading,
 }: {
 	data: iData;
 	setData: React.Dispatch<React.SetStateAction<iData>>;
 	setFiles: React.Dispatch<React.SetStateAction<string[]>>;
+	setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
 	const [changeStyle] = useState(false);
 	const [selectedFiles, setSelectedFiles] =
@@ -34,6 +38,12 @@ function Files({
 			return [];
 		});
 	}, []);
+
+	const selectFolder = async () => {
+		return await open({
+			directory: true,
+		});
+	};
 
 	return (
 		<div className='container'>
@@ -113,23 +123,30 @@ function Files({
 										? false
 										: true
 								}
-								className='test'
 								style={{
 									marginLeft: '0.5rem',
 								}}
 								onClick={async () => {
+									const selected = await selectFolder();
+									setData((prev) => {
+										return {
+											...prev,
+											timeEnd: new Date(Date.now()),
+										};
+									});
+									setLoading(true);
 									await invoke('zip_and_save_to_directory', {
 										filePaths: selectedFiles
 											?.filter(
 												(file) => file.selected === true
 											)
 											.map((file) => file.path),
-										outputDirectory:
-											'/Users/cichowlasp/Documents/test/',
-										zipFileName: `${data.name}_${data.surname}.zip`,
+										outputDirectory: selected,
+										zipFileName: `${data.name}_${data.surname}_PCAP_Dump.zip`,
 									});
+									setLoading(false);
 								}}>
-								Proceed
+								Save Files
 							</button>
 						</div>
 					</>

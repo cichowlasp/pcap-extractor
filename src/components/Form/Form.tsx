@@ -61,6 +61,7 @@ const Form = ({
 				}}>
 				<h2>Fill up your data</h2>
 				<input
+					minLength={3}
 					onChange={(event) => {
 						setData((prev) => {
 							return { ...prev, name: event.target.value };
@@ -69,6 +70,7 @@ const Form = ({
 					placeholder='Enter a name...'
 				/>
 				<input
+					minLength={3}
 					onChange={(event) => {
 						setData((prev) => {
 							return { ...prev, surname: event.target.value };
