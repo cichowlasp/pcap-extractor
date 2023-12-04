@@ -24,6 +24,7 @@ pnet = "0.34.0"
 tempfile = "3.8.1"
 zip = "0.6.6"
 sha2 = "0.10.8"
+regex = "1.10.2"
 
 
 [features]

@@ -2668,6 +2668,7 @@ dependencies = [
  "nom",
  "pcap",
  "pnet",
+ "regex",
  "serde",
  "serde_json",
  "sha2",

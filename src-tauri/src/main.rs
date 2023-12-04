@@ -12,6 +12,8 @@ use zip::write::FileOptions;
 use zip::ZipWriter;
 use std::fs;
 use sha2::{Digest, Sha256};
+use regex;
+
 
 
 const JPEG_MAGIC_NUMBER: [u8; 4] = [0xFF, 0xD8, 0xFF, 0xE0]; // JPEG magic number
@@ -165,9 +167,39 @@ fn hash_files(file_paths: &[String]) -> String {
     hash_info
 }
 
+fn extract_uri_from_http_packet(payload: &[u8]) -> Option<String> {
+    // Implement logic here to extract URIs from HTTP packet payload
+    // This is a placeholder; replace this logic with actual URI extraction logic
+    // Example: Extract URIs from HTTP GET requests using regex
+    let payload_str = String::from_utf8_lossy(&payload);
+    println!("{}",payload_str);
+    let re = regex::Regex::new(r"(?i)GET /([^\\s]+)").unwrap();
+    if let Some(captures) = re.captures(&payload_str) {
+        if let Some(uri) = captures.get(1) {
+            return Some(uri.as_str().to_string());
+        }
+    }
+    None
+}
+
+fn extract_uris_from_pcap(file_paths: &[String]) -> String {
+    let mut uri_info = String::new();
+
+    for file_path in file_paths {
+        let mut cap = Capture::from_file(file_path).unwrap();
+        while let Ok(packet) = cap.next_packet() {
+            if let Some(uri) = extract_uri_from_http_packet(packet.data) {
+                uri_info.push_str(&format!("File: {} - URI: {}\n", file_path, uri));
+            }
+        }
+    }
+
+    uri_info
+}
+
 // Function to zip files from an array of paths and save the resulting zip file to a directory
 #[tauri::command]
-fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, zip_file_name: String) -> Result<String, String> {
+fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, zip_file_name: String, pcap_paths: Vec<String>) -> Result<String, String> {
     let output_zip_path = std::path::Path::new(&output_directory).join(&zip_file_name);
     let output_file = match File::create(&output_zip_path) {
         Ok(file) => file,
@@ -175,15 +207,19 @@ fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, 
     };
     let mut zip = ZipWriter::new(output_file);
     let hash_info = hash_files(&file_paths);
+    let uri_info = extract_uris_from_pcap(&pcap_paths);
 
-    let mut hash_file = File::create("hash_info.txt").unwrap();
-    hash_file.write_all(hash_info.as_bytes()).unwrap();
+    // Creating a TXT file with hash info and website list
+    let mut info_file = File::create("info.txt").unwrap();
+    info_file.write_all(hash_info.as_bytes()).unwrap();
+    info_file.write_all(uri_info.as_bytes()).unwrap();
 
-    let hash_file_content = fs::read("hash_info.txt").unwrap();
+    // Adding the info TXT file to the zip archive
+    let info_file_content = fs::read("info.txt").unwrap();
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
-    zip.start_file("hash_info.txt", options).unwrap();
-    zip.write_all(&hash_file_content).unwrap();
-    fs::remove_file("hash_info.txt").unwrap();
+    zip.start_file("info.txt", options).unwrap();
+    zip.write_all(&info_file_content).unwrap();
+    fs::remove_file("info.txt").unwrap();
 
     for file_path in file_paths {
         let metadata = match fs::metadata(&file_path) {
