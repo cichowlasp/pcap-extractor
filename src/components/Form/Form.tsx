@@ -45,7 +45,7 @@ const Form = ({
 									return {
 										...prev,
 										files: [
-											...(prev?.files ? files : []),
+											...(prev?.files ? prev.files : []),
 											...paths,
 										],
 									};

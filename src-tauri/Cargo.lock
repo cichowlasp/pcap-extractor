@@ -2675,6 +2675,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tempfile",
+ "url",
  "zip",
 ]
 

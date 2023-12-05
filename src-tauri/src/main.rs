@@ -12,7 +12,7 @@ use zip::write::FileOptions;
 use zip::ZipWriter;
 use std::fs;
 use sha2::{Digest, Sha256};
-use regex;
+use regex::Regex;
 
 
 
@@ -160,57 +160,52 @@ fn hash_files(file_paths: &[String]) -> String {
             };
             let file_content = fs::read(&file_path).unwrap();
             let file_hash = format!("{:x}", Sha256::digest(&file_content)); // Calculate hash using SHA-256
-            hash_info.push_str(&format!("File: {} - Hash: {}\n", file_name, file_hash));
+            hash_info.push_str(&format!("File: {} - Hash (SHA256): {}\n", file_name, file_hash));
         }
         
     }
     hash_info
 }
 
-fn extract_uri_from_http_packet(payload: &[u8]) -> Option<String> {
-    // Implement logic here to extract URIs from HTTP packet payload
-    // This is a placeholder; replace this logic with actual URI extraction logic
-    // Example: Extract URIs from HTTP GET requests using regex
-    let payload_str = String::from_utf8_lossy(&payload);
-    println!("{}",payload_str);
-    let re = regex::Regex::new(r"(?i)GET /([^\\s]+)").unwrap();
-    if let Some(captures) = re.captures(&payload_str) {
-        if let Some(uri) = captures.get(1) {
-            return Some(uri.as_str().to_string());
-        }
-    }
-    None
-}
-
-fn extract_uris_from_pcap(file_paths: &[String]) -> String {
-    let mut uri_info = String::new();
-
+fn extract_urls_from_pcap(file_paths: &[String]) -> String {
+    let mut urls = String::new();
+    let url_regex = Regex::new(r#"(https?|ftp)://[^\s/$.?#].[^\s]*"#).unwrap(); // Regular expression for matching URLs
+    urls.push_str("\nWebistes Found in PCAP Files\n");
     for file_path in file_paths {
-        let mut cap = Capture::from_file(file_path).unwrap();
-        while let Ok(packet) = cap.next_packet() {
-            if let Some(uri) = extract_uri_from_http_packet(packet.data) {
-                uri_info.push_str(&format!("File: {} - URI: {}\n", file_path, uri));
-            }
+        let file_content = match fs::read(&file_path) {
+            Ok(content) => content,
+            Err(_) => continue, // Skip file if unable to read
+        };
+
+        // Assuming the file content is packet data in this example
+        let text = String::from_utf8_lossy(&file_content);
+
+        // Extract URLs using the regex pattern
+        for capture in url_regex.captures_iter(&text) {
+            urls.push_str(&capture[0]);
+            urls.push('\n');
         }
     }
-
-    uri_info
+    urls
 }
 
 // Function to zip files from an array of paths and save the resulting zip file to a directory
 #[tauri::command]
-fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, zip_file_name: String, pcap_paths: Vec<String>) -> Result<String, String> {
+fn zip_and_save_to_directory(file_paths: Vec<String>, output_directory: String, zip_file_name: String, pcap_paths: Vec<String>, name:String, surname:String, time_start:String, time_end:String) -> Result<String, String> {
     let output_zip_path = std::path::Path::new(&output_directory).join(&zip_file_name);
     let output_file = match File::create(&output_zip_path) {
         Ok(file) => file,
         Err(_) => return Err("Failed to create output zip file".to_string()),
     };
+    // println!("{:?},{:?}", time_start, time_end);
     let mut zip = ZipWriter::new(output_file);
+    let user_info = format!("Export informations:\nUser: {} {}\nTime Start:{}\nTime End:{}\n\n",name, surname, time_start, time_end);
     let hash_info = hash_files(&file_paths);
-    let uri_info = extract_uris_from_pcap(&pcap_paths);
+    let uri_info = extract_urls_from_pcap(&pcap_paths);
 
     // Creating a TXT file with hash info and website list
     let mut info_file = File::create("info.txt").unwrap();
+    info_file.write_all(user_info.as_bytes()).unwrap();
     info_file.write_all(hash_info.as_bytes()).unwrap();
     info_file.write_all(uri_info.as_bytes()).unwrap();
 

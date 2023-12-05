@@ -15,11 +15,13 @@ function Files({
 	setData,
 	setFiles,
 	setLoading,
+	files,
 }: {
 	data: iData;
 	setData: React.Dispatch<React.SetStateAction<iData>>;
 	setFiles: React.Dispatch<React.SetStateAction<string[]>>;
 	setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+	files: string[];
 }) {
 	const [changeStyle] = useState(false);
 	const [selectedFiles, setSelectedFiles] =
@@ -143,7 +145,24 @@ function Files({
 											.map((file) => file.path),
 										outputDirectory: selected,
 										zipFileName: `${data.name}_${data.surname}_PCAP_Dump.zip`,
+										pcapPaths: files,
+										name: data.name,
+										surname: data.surname,
+										timeStart: data.timeStart
+											? data.timeStart.toLocaleString()
+											: '',
+										timeEnd: new Date(
+											Date.now()
+										).toLocaleString(),
 									});
+									setData({
+										name: '',
+										surname: '',
+										timeStart: undefined,
+										timeEnd: undefined,
+										files: [],
+									});
+									setFiles([]);
 									setLoading(false);
 								}}>
 								Save Files

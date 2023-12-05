@@ -112,6 +112,7 @@ function App() {
 				setData={setData}
 				setFiles={setFiles}
 				setLoading={setLoading}
+				files={files}
 			/>
 		);
 
