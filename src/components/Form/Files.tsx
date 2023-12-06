@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import './Files.css';
 import { open } from '@tauri-apps/api/dialog';
+import { type } from '@tauri-apps/api/os';
 
 type iData = {
 	name: string;
@@ -52,7 +53,6 @@ function Files({
 			multiple: false,
 		});
 	};
-
 	return (
 		<div className='container'>
 			<h1>
@@ -135,13 +135,20 @@ function Files({
 								}}
 								onClick={async () => {
 									const selected = await selectFolder();
+									const osType = await type();
 									if (
 										selected &&
 										typeof selected === 'string'
 									) {
 										setExportPath(
 											selected +
-												`/${data.name}_${data.surname}_PCAP_Dump.zip`
+												`${
+													osType === 'Windows_NT'
+														? '\\'
+														: '/'
+												}${data.name}_${
+													data.surname
+												}_PCAP_Dump.zip`
 										);
 									}
 									setData((prev) => {
