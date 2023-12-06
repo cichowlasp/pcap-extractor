@@ -123,13 +123,6 @@ function Files({
 								Exit
 							</button>
 							<button
-								disabled={
-									selectedFiles?.find(
-										(files) => files.selected === true
-									)?.selected
-										? false
-										: true
-								}
 								style={{
 									marginLeft: '0.5rem',
 								}}
@@ -187,7 +180,7 @@ function Files({
 									setLoading(false);
 									setExported(true);
 								}}>
-								Save Files
+								Create raport
 							</button>
 						</div>
 					</>

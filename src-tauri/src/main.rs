@@ -5,10 +5,12 @@ use pnet::packet::ethernet::{EtherTypes, EthernetPacket};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::ipv4::Ipv4Packet;
 use pnet::packet::tcp::TcpPacket;
+use pnet::packet::udp::UdpPacket;
 use pnet::packet::Packet;
 use regex::Regex;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -232,12 +234,14 @@ fn zip_and_save_to_directory(
     );
     let hash_info = hash_files(&file_paths);
     let uri_info = extract_urls_from_pcap(&pcap_paths);
+    let ip_info = extract_ip_addresses_and_ports(&pcap_paths);
 
     // Creating a TXT file with hash info and website list
     let mut info_file = File::create("info.txt").unwrap();
     info_file.write_all(user_info.as_bytes()).unwrap();
     info_file.write_all(hash_info.as_bytes()).unwrap();
     info_file.write_all(uri_info.as_bytes()).unwrap();
+    info_file.write_all(ip_info.as_bytes()).unwrap();
 
     // Adding the info TXT file to the zip archive
     let info_file_content = fs::read("info.txt").unwrap();
@@ -327,6 +331,58 @@ fn show_in_folder(path: String) {
     {
         Command::new("open").args(["-R", &path]).spawn().unwrap();
     }
+}
+
+fn extract_ip_addresses_and_ports(file_paths: &[String]) -> String {
+    let mut ip_port_set: HashSet<String> = HashSet::new();
+    let mut ip_port = String::new();
+
+    for file_path in file_paths {
+        let mut pcap = match pcap::Capture::from_file(file_path) {
+            Ok(p) => p,
+            Err(_) => continue, // Skip file if unable to read
+        };
+
+        while let Ok(packet) = pcap.next_packet() {
+            let data = packet.data;
+            let eth_packet = EthernetPacket::new(data).unwrap();
+            if eth_packet.get_ethertype() == EtherTypes::Ipv4 {
+                if let Some(ipv4) = pnet::packet::ipv4::Ipv4Packet::new(eth_packet.payload()) {
+                    let src_ip = format!("{}", ipv4.get_source());
+                    let dst_ip = format!("{}", ipv4.get_destination());
+
+                    match ipv4.get_next_level_protocol() {
+                        IpNextHeaderProtocols::Tcp => {
+                            if let Some(tcp) = TcpPacket::new(ipv4.payload()) {
+                                let src_port = tcp.get_source();
+                                let dst_port = tcp.get_destination();
+
+                                ip_port_set.insert(format!("src: {}:{}", src_ip, src_port));
+                                ip_port_set.insert(format!("dst: {}:{}", dst_ip, dst_port));
+                            }
+                        }
+                        IpNextHeaderProtocols::Udp => {
+                            if let Some(udp) = UdpPacket::new(ipv4.payload()) {
+                                let src_port = udp.get_source();
+                                let dst_port = udp.get_destination();
+
+                                ip_port_set.insert(format!("src: {}:{}", src_ip, src_port));
+                                ip_port_set.insert(format!("dst: {}:{}", dst_ip, dst_port));
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+    ip_port.push_str("\nIP adresses with ports:\n");
+    for ip in ip_port_set {
+        ip_port.push_str(&ip);
+        ip_port.push('\n');
+    }
+
+    ip_port
 }
 fn main() {
     tauri::Builder::default()
