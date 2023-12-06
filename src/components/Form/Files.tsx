@@ -10,17 +10,22 @@ type iData = {
 	timeEnd?: Date;
 	files?: string[];
 };
+
 function Files({
 	data,
 	setData,
 	setFiles,
 	setLoading,
+	setExported,
 	files,
+	setExportPath,
 }: {
 	data: iData;
 	setData: React.Dispatch<React.SetStateAction<iData>>;
 	setFiles: React.Dispatch<React.SetStateAction<string[]>>;
 	setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+	setExported: React.Dispatch<React.SetStateAction<boolean>>;
+	setExportPath: React.Dispatch<React.SetStateAction<string>>;
 	files: string[];
 }) {
 	const [changeStyle] = useState(false);
@@ -44,6 +49,7 @@ function Files({
 	const selectFolder = async () => {
 		return await open({
 			directory: true,
+			multiple: false,
 		});
 	};
 
@@ -72,7 +78,6 @@ function Files({
 												type='checkbox'
 												checked={file.selected}
 												onChange={() => {
-													console.log(selectedFiles);
 													setSelectedFiles((prev) => {
 														return prev?.map(
 															(toSelect) => {
@@ -130,6 +135,15 @@ function Files({
 								}}
 								onClick={async () => {
 									const selected = await selectFolder();
+									if (
+										selected &&
+										typeof selected === 'string'
+									) {
+										setExportPath(
+											selected +
+												`/${data.name}_${data.surname}_PCAP_Dump.zip`
+										);
+									}
 									setData((prev) => {
 										return {
 											...prev,
@@ -164,6 +178,7 @@ function Files({
 									});
 									setFiles([]);
 									setLoading(false);
+									setExported(true);
 								}}>
 								Save Files
 							</button>

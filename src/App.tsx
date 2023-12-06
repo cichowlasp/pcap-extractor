@@ -5,6 +5,7 @@ import Form from './components/Form/Form';
 import Loading from './components/Form/Loading';
 import Files from './components/Form/Files';
 import './App.css';
+import PopUp from './components/Form/PopUp';
 
 function App() {
 	const [files, setFiles] = useState<string[]>([]);
@@ -12,6 +13,8 @@ function App() {
 	const [error, setError] = useState('');
 	const [form, setFormView] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [exported, setExported] = useState(false);
+	const [exportPath, setExportPath] = useState('');
 	type iData = {
 		name: string;
 		surname: string;
@@ -113,13 +116,19 @@ function App() {
 				setFiles={setFiles}
 				setLoading={setLoading}
 				files={files}
+				setExported={setExported}
+				setExportPath={setExportPath}
 			/>
 		);
 
 	return (
 		<div className='container'>
 			<h1>PCAP Extractor</h1>
-
+			<PopUp
+				exported={exported}
+				setExported={setExported}
+				exportPath={exportPath}
+			/>
 			<>
 				<div className={`file-drop ${changeStyle ? 'hover' : ''}`}>
 					{files.length === 0 ? (
@@ -160,14 +169,12 @@ function App() {
 													background: '#FF4029',
 													boxShadow: 'none',
 												}}>
-												<img
-													width={'20px'}
-													height={'20px'}
-													src='/trash.svg'
-													alt='trash icon'
+												<div
+													className='icon'
 													style={{
 														width: '20px',
 														height: '20px',
+														fill: 'fff',
 													}}
 												/>
 											</button>

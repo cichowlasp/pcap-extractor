@@ -57,7 +57,6 @@ const Form = ({
 					});
 					setFormView(false);
 					setLoading(false);
-					console.log(data);
 				}}>
 				<h2>Fill up your data</h2>
 				<input

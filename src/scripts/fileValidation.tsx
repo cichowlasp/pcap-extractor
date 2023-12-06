@@ -188,7 +188,6 @@ export const validateFileHeader = (byteHeader: Uint8Array, type: string) => {
 export const isValidFile = async (file: string) => {
 	const fileType = 'pcap';
 	const bytes = readBinaryFile(file);
-	console.log(bytes);
 	const isValid = validateFileHeader(await bytes, fileType);
 	if (isValid) {
 		return true;

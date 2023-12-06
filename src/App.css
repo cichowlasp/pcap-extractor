@@ -15,6 +15,10 @@
 	margin-bottom: 0;
 }
 
+.container {
+	transition: all 1s ease-in-out;
+}
+
 .file-drop .text {
 	font-size: 1em;
 	font-weight: bold;
@@ -65,4 +69,17 @@ li {
 
 li {
 	outline: none;
+}
+
+.icon {
+	background-color: white;
+	mask: url(/trash.svg) no-repeat center;
+	mask-size: 100%;
+}
+@media (prefers-color-scheme: dark) {
+	.icon {
+		background-color: black;
+		mask: url(/trash.svg) no-repeat center;
+		mask-size: 100%;
+	}
 }
