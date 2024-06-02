@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import './Files.css';
 import { open } from '@tauri-apps/api/dialog';
-import { type } from '@tauri-apps/api/os';
+import { type as system } from '@tauri-apps/api/os';
 
 type iData = {
 	name: string;
@@ -19,19 +19,48 @@ function Files({
 	setLoading,
 	setExported,
 	files,
+	links,
+	setLinks,
 	setExportPath,
 }: {
 	data: iData;
 	setData: React.Dispatch<React.SetStateAction<iData>>;
 	setFiles: React.Dispatch<React.SetStateAction<string[]>>;
+	setLinks: React.Dispatch<
+		React.SetStateAction<
+			{
+				link: string;
+				stats?: {
+					malicious: number;
+					suspicious: number;
+					undetected: number;
+					harmless: number;
+					timeout: number;
+				};
+			}[]
+		>
+	>;
 	setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 	setExported: React.Dispatch<React.SetStateAction<boolean>>;
 	setExportPath: React.Dispatch<React.SetStateAction<string>>;
 	files: string[];
+	links: {
+		link: string;
+		stats?: {
+			malicious: number;
+			suspicious: number;
+			undetected: number;
+			harmless: number;
+			timeout: number;
+		};
+	}[];
 }) {
 	const [changeStyle] = useState(false);
 	const [selectedFiles, setSelectedFiles] =
 		useState<{ path: string; selected: boolean }[]>();
+	const [type, setType] = useState<'files' | 'links'>(
+		files.length === 0 ? 'links' : 'files'
+	);
 
 	useEffect(() => {
 		setSelectedFiles(() => {
@@ -39,7 +68,7 @@ function Files({
 				return data.files.map((path) => {
 					return {
 						path,
-						selected: false,
+						selected: true,
 					};
 				});
 			}
@@ -61,48 +90,71 @@ function Files({
 
 			<>
 				<div className={`file-drop ${changeStyle ? 'hover' : ''}`}>
+					<div className='pill'>
+						<button
+							onClick={() => setType('files')}
+							className={type === 'files' ? 'active' : ''}>
+							Files
+						</button>
+						<button
+							onClick={() => {
+								setType('links');
+							}}
+							className={type === 'links' ? 'active' : ''}>
+							Links
+						</button>
+					</div>
 					<>
-						<ul>
-							{selectedFiles ? (
-								selectedFiles.map((file, index) => {
-									return (
-										<li key={index} value={file.path}>
-											<div
-												style={{
-													wordBreak: 'break-all',
-													maxWidth: '90%',
-												}}>
-												{file.path}
-											</div>
-											<input
-												type='checkbox'
-												checked={file.selected}
-												onChange={() => {
-													setSelectedFiles((prev) => {
-														return prev?.map(
-															(toSelect) => {
-																if (
-																	toSelect ===
-																	file
-																) {
-																	return {
-																		path: toSelect.path,
-																		selected:
-																			!toSelect.selected,
-																	};
-																}
-																return toSelect;
-															}
-														);
-													});
-												}}></input>
-										</li>
-									);
-								})
-							) : (
-								<>error</>
-							)}
-						</ul>
+						{type === 'files' ? (
+							<ul>
+								{selectedFiles ? (
+									selectedFiles.map((file, index) => {
+										return (
+											<li key={index} value={file.path}>
+												<div
+													style={{
+														wordBreak: 'break-all',
+														maxWidth: '90%',
+													}}>
+													{
+														file.path
+															.split('/')
+															.reverse()[0]
+													}
+												</div>
+												<div>safe</div>
+											</li>
+										);
+									})
+								) : (
+									<>error</>
+								)}
+							</ul>
+						) : (
+							<ul>
+								{links ? (
+									links.map((link, index) => {
+										return (
+											<li key={index} value={link.link}>
+												<div
+													style={{
+														wordBreak: 'break-all',
+														maxWidth: '90%',
+													}}>
+													{link.link}
+												</div>
+												<div>
+													{link.stats?.malicious}
+												</div>
+											</li>
+										);
+									})
+								) : (
+									<>error</>
+								)}
+							</ul>
+						)}
+
 						<div
 							style={{
 								display: 'flex',
@@ -116,6 +168,7 @@ function Files({
 								}}
 								onClick={() => {
 									setFiles([]);
+									setLinks([]);
 									setData((prev) => {
 										return { ...prev, files: undefined };
 									});
@@ -128,7 +181,7 @@ function Files({
 								}}
 								onClick={async () => {
 									const selected = await selectFolder();
-									const osType = await type();
+									const osType = await system();
 									if (
 										selected &&
 										typeof selected === 'string'

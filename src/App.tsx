@@ -14,6 +14,18 @@ function App() {
 	const [form, setFormView] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [exported, setExported] = useState(false);
+	const [links, setLinks] = useState<
+		{
+			link: string;
+			stats?: {
+				malicious: number;
+				suspicious: number;
+				undetected: number;
+				harmless: number;
+				timeout: number;
+			};
+		}[]
+	>([]);
 	const [exportPath, setExportPath] = useState('');
 	type iData = {
 		name: string;
@@ -108,7 +120,7 @@ function App() {
 
 	if (loading) return <Loading />;
 
-	if (data?.files && data.files.length !== 0)
+	if ((data?.files && data.files.length !== 0) || links.length !== 0)
 		return (
 			<Files
 				data={data}
@@ -116,6 +128,8 @@ function App() {
 				setFiles={setFiles}
 				setLoading={setLoading}
 				files={files}
+				links={links}
+				setLinks={setLinks}
 				setExported={setExported}
 				setExportPath={setExportPath}
 			/>
@@ -234,6 +248,7 @@ function App() {
 					setFormView={setFormView}
 					setLoading={setLoading}
 					setFiles={setFiles}
+					setLinks={setLinks}
 					data={data}
 					setData={setData}
 				/>

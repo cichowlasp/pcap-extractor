@@ -27,6 +27,7 @@ sha2 = "0.10.8"
 regex = "1.10.2"
 url = "2.5.0"
 fork = "0.1"
+printpdf = "0.5.0"
 
 
 [features]

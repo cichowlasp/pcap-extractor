@@ -162,6 +162,12 @@ fn save_file(data: &[u8], file_extension: &str, temp_dir: &Path) -> Option<Strin
     }
 }
 
+#[tauri::command]
+fn find_urls(pcap_paths: Vec<String>) -> String {
+    let urls = extract_urls_from_pcap(&pcap_paths);
+    return urls;
+}
+
 fn hash_files(file_paths: &[String]) -> String {
     let mut hash_info = String::new();
     hash_info.push_str("Extracted Files Hashes\n");
@@ -389,7 +395,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             read_pcap_file,
             zip_and_save_to_directory,
-            show_in_folder
+            show_in_folder,
+            find_urls
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
