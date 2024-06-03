@@ -122,7 +122,12 @@ function Files({
 															.reverse()[0]
 													}
 												</div>
-												<div>safe</div>
+												<div
+													style={{
+														color: '#08A045',
+													}}>
+													safe
+												</div>
 											</li>
 										);
 									})
@@ -143,9 +148,22 @@ function Files({
 													}}>
 													{link.link}
 												</div>
-												<div>
-													{link.stats?.malicious}
-												</div>
+												{link.stats?.malicious === 0 ||
+												link.stats?.suspicious === 0 ? (
+													<div
+														style={{
+															color: '#08A045',
+														}}>
+														safe
+													</div>
+												) : (
+													<div
+														style={{
+															color: '#FF4029',
+														}}>
+														not safe
+													</div>
+												)}
 											</li>
 										);
 									})
@@ -230,6 +248,7 @@ function Files({
 										files: [],
 									});
 									setFiles([]);
+									setLinks([]);
 									setLoading(false);
 									setExported(true);
 								}}>

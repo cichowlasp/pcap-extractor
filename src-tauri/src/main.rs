@@ -197,7 +197,9 @@ fn hash_files(file_paths: &[String]) -> String {
 fn extract_urls_from_pcap(file_paths: &[String]) -> String {
     let mut urls = String::new();
     let url_regex = Regex::new(r#"(https?|ftp)://[^\s/$.?#].[^\s]*"#).unwrap(); // Regular expression for matching URLs
-    urls.push_str("\nWebistes Found in PCAP Files\n");
+    let mut seen_urls: HashSet<String> = HashSet::new(); // To store unique simplified URLs
+    urls.push_str("\nWebsites Found in PCAP Files\n");
+
     for file_path in file_paths {
         let file_content = match fs::read(&file_path) {
             Ok(content) => content,
@@ -209,10 +211,22 @@ fn extract_urls_from_pcap(file_paths: &[String]) -> String {
 
         // Extract URLs using the regex pattern
         for capture in url_regex.captures_iter(&text) {
-            urls.push_str(&capture[0]);
-            urls.push('\n');
+            let full_url = &capture[0];
+            if let Ok(parsed_url) = url::Url::parse(full_url) {
+                let simplified_url = format!(
+                    "{}://{}/",
+                    parsed_url.scheme(),
+                    parsed_url.host_str().unwrap_or("")
+                );
+                if seen_urls.insert(simplified_url.clone()) {
+                    // Add only unique URLs
+                    urls.push_str(&simplified_url);
+                    urls.push('\n');
+                }
+            }
         }
     }
+
     urls
 }
 

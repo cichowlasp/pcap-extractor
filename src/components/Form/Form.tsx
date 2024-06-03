@@ -115,12 +115,14 @@ const Form = ({
 								});
 							});
 					});
+					console.log(files);
 					invoke('find_urls', {
 						pcapPaths: files,
 					})
 						.then((res) => res)
 						.then((res) => {
 							const urls = res as string;
+							console.log(urls);
 							const listOfUrls = urls
 								.trim()
 								.split('\n')
