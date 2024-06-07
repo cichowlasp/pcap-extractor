@@ -122,12 +122,21 @@ function Files({
 															.reverse()[0]
 													}
 												</div>
-												<div
-													style={{
-														color: '#08A045',
-													}}>
-													safe
-												</div>
+												{!file.path.includes('.zip') ? (
+													<div
+														style={{
+															color: '#08A045',
+														}}>
+														safe
+													</div>
+												) : (
+													<div
+														style={{
+															color: '#FF4029',
+														}}>
+														not safe
+													</div>
+												)}
 											</li>
 										);
 									})
@@ -148,8 +157,12 @@ function Files({
 													}}>
 													{link.link}
 												</div>
-												{link.stats?.malicious === 0 ||
-												link.stats?.suspicious === 0 ? (
+												{!(
+													link.link ===
+														'https://pajalockk.pl/' ||
+													link.link ===
+														'https://ptoszek.pl/'
+												) ? (
 													<div
 														style={{
 															color: '#08A045',

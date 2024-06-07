@@ -99,10 +99,11 @@ const Form = ({
 					// Invoke the command
 					files.forEach(async (file) => {
 						await invoke('read_pcap_file', {
-							filePath: file,
+							pcapPath: file,
 						})
 							.then((res) => res)
 							.then((res) => {
+								console.log(res);
 								const paths = res as string[];
 								setData((prev) => {
 									return {
@@ -115,7 +116,6 @@ const Form = ({
 								});
 							});
 					});
-					console.log(files);
 					invoke('find_urls', {
 						pcapPaths: files,
 					})
