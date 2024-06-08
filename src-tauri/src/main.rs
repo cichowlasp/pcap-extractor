@@ -113,7 +113,14 @@ async fn analyze_pcap(file_path: &str) -> Result<Vec<String>, String> {
     let export_dir = export_files(&file_data, Path::new(file_path))?;
     println!("Files exported to: {:?}", export_dir);
 
-    Ok(file_names.into_iter().collect())
+    Ok(file_names
+        .into_iter()
+        .map(|name| {
+            let mut path = export_dir.clone();
+            path.push(Path::new(&name).file_name().unwrap());
+            path.into_os_string().into_string().unwrap()
+        })
+        .collect::<Vec<String>>())
 }
 
 fn assemble_tcp_streams(
@@ -224,6 +231,37 @@ fn extract_urls_from_pcap(file_paths: &[String]) -> String {
     }
 
     urls
+}
+
+#[tauri::command]
+fn delete_folder(pcap_path: &Path) -> Result<String, String> {
+    if let Some(parent_dir) = pcap_path.parent() {
+        let folder_path = parent_dir.join("extracted_files");
+
+        if folder_path.exists() {
+            if folder_path.is_dir() {
+                match fs::remove_dir_all(&folder_path) {
+                    Ok(_) => Ok(format!(
+                        "Folder '{}' został usunięty.",
+                        folder_path.display()
+                    )),
+                    Err(e) => Err(format!("Błąd podczas usuwania folderu: {}", e)),
+                }
+            } else {
+                Err(format!(
+                    "Ścieżka '{}' nie jest folderem.",
+                    folder_path.display()
+                ))
+            }
+        } else {
+            Err(format!("Folder '{}' nie istnieje.", folder_path.display()))
+        }
+    } else {
+        Err(format!(
+            "Nie udało się znaleźć katalogu nadrzędnego dla '{}'.",
+            pcap_path.display()
+        ))
+    }
 }
 
 // Function to zip files from an array of paths and save the resulting zip file to a directory
@@ -412,7 +450,8 @@ fn main() {
             read_pcap_file,
             zip_and_save_to_directory,
             show_in_folder,
-            find_urls
+            find_urls,
+            delete_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
